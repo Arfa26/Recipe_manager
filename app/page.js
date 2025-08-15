@@ -130,16 +130,16 @@ let filteredRecipes = recipes.filter((recipe) => {
   return matchesSearch && matchesTag && matchesMeal;
 });
 
-// // Sort by title if selected
-// if (sortOrder === "asc") {
-//   filteredRecipes.sort((a, b) => a.name.localeCompare(b.name));
-// } else if (sortOrder === "desc") {
-//   filteredRecipes.sort((a, b) => b.name.localeCompare(a.name));
-// }
-const handleSortChange = (field) => {
-  setSortField(field);
-  dispatch(fetchRecipes({ skip: 0, limit: 10, sort: field }));
-};
+// Sort by title if selected
+if (sortOrder === "asc") {
+  filteredRecipes.sort((a, b) => a.name.localeCompare(b.name));
+} else if (sortOrder === "desc") {
+  filteredRecipes.sort((a, b) => b.name.localeCompare(a.name));
+}
+// const handleSortChange = (field) => {
+//   setSortField(field);
+//   dispatch(fetchRecipes({ skip: 0, limit: 10, sort: field }));
+// };
 
 
 
@@ -252,15 +252,25 @@ const paginatedRecipes = filteredRecipes.slice(skip, skip + limit);
   </TextField>
 <TextField
   select
-  label="Sort by"
-  value={sortField}
-  onChange={(e) => handleSortChange(e.target.value)}
-  sx={{ width: 180, bgcolor: "#fff", borderRadius: 2,bottom:10 }}
+  label="Sort by Title"
+  value={sortOrder}
+  onChange={(e) => setSortOrder(e.target.value)}
+  sx={{
+    bottom: 10,
+    width: 180,
+    bgcolor: "#fff",
+    borderRadius: 2,
+    boxShadow: 1,
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ddd" },
+    "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#d26c19" },
+    "& .MuiInputLabel-root": { color: "#555", fontWeight: 500 },
+  }}
 >
-  <MenuItem value="">Default</MenuItem>
-  <MenuItem value="title">Title</MenuItem>
-  <MenuItem value="calories">Calories</MenuItem>
+  <MenuItem value="">None</MenuItem>
+  <MenuItem value="asc">A → Z</MenuItem>
+  <MenuItem value="desc">Z → A</MenuItem>
 </TextField>
+
 
   </Box>
 </Box>

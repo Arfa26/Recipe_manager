@@ -1,4 +1,5 @@
-import { recipes } from "../../../../data/recipes"; // adjust relative path
+import { recipes } from "@/data/recipes"; // if using Next.js alias
+ // adjust relative path
 
 export async function GET(req, { params }) {
   const id = Number(params.id);
