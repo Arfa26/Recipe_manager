@@ -75,24 +75,59 @@ useEffect(() => {
     }
   };
   fetchTags();
-}, []);
+}, [selectedMeal]);
 
 // Fetch meals
+// useEffect(() => {
+//   const fetchMeals = async () => {
+//     try {
+//       const res = await fetch("https://dummyjson.com/recipes"); // ✅ correct endpoint
+//       const data = await res.json();
+
+//       // data.recipes is already an array
+//       setMeals(data.recipes);
+//     } catch (err) {
+//       console.error("Error fetching meals:", err);
+//     }
+//   };
+//   fetchMeals();
+// }, [selectedMeal]);
 useEffect(() => {
-  const fetchMeals = async () => {
-    try {
-      const res = await fetch("https://dummyjson.com/recipes"); // ✅ correct endpoint
-      const data = await res.json();
+    const fetchAllMeals = async () => {
+      try {
+        const res = await fetch("https://dummyjson.com/recipes");
+        const data = await res.json();
 
-      // data.recipes is already an array
-      setMeals(data.recipes);
-    } catch (err) {
-      console.error("Error fetching meals:", err);
-    }
-  };
-  fetchMeals();
-}, []);
+        // Extract unique mealTypes (Breakfast, Lunch, etc.)
+        const uniqueMeals = [
+          ...new Set(data.recipes.flatMap((r) => r.mealType || [])),
+        ];
 
+        setMeals(uniqueMeals);
+      } catch (err) {
+        console.error("Error fetching meals:", err);
+      }
+    };
+    fetchAllMeals();
+  }, []);
+
+  // Fetch recipes based on selected meal
+  useEffect(() => {
+    if (!selectedMeal) return;
+
+    const fetchByMeal = async () => {
+      try {
+        const res = await fetch(
+          `https://dummyjson.com/recipes/meal/${selectedMeal}`
+        );
+        const data = await res.json();
+        setRecipes(data.recipes || []);
+      } catch (err) {
+        console.error("Error fetching filtered recipes:", err);
+      }
+    };
+      fetchByMeal();
+  }, [selectedMeal]);
 
 
 
@@ -220,42 +255,44 @@ const paginatedRecipes = filteredRecipes.slice(skip, skip + limit);
   </TextField>
 
   {/* Meal Filter */}
-  <TextField
-    select
-    label="Meal"
-    value={selectedMeal}
-    onChange={(e) => setSelectedMeal(e.target.value)}
-    sx={{
-      bottom:10,
-      width: 180,
-      bgcolor: "#fff",
-      borderRadius: 2,
-      boxShadow: 1,
-      "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ddd" },
-      "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#d26c19" },
-      "& .MuiInputLabel-root": { color: "#555", fontWeight: 500 },
-    }}
-  >
-{meals
-  .filter((meal) =>
-    ![
-      "breakfast",
-      "lunch",
-      "dinner",
-      "dessert",
-      "snack",
-      "drink",
-      "appetizer",
-      "side",
-    ].includes(meal.name.toLowerCase())
-  )
-  .map((meal) => (
-    <div key={meal.id}>{meal.name}</div>
+
+<TextField
+  select
+  label="Meal"
+  value={selectedMeal}
+  onChange={(e) => {
+    setSelectedMeal(e.target.value);
+    console.log("Selected meal:", e.target.value);
+  }}
+  sx={{
+    bottom: 10,
+    width: 180,
+    bgcolor: "#fff",
+    borderRadius: 2,
+    boxShadow: 1,
+    "& .MuiOutlinedInput-notchedOutline": { borderColor: "#ddd" },
+    "& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline": {
+      borderColor: "#d26c19",
+    },
+    "& .MuiInputLabel-root": { color: "#555", fontWeight: 500 },
+  }}
+>
+  <MenuItem value="">All</MenuItem>
+  {meals.map((meal) => (
+    <MenuItem key={meal} value={meal}>
+      {meal}
+    </MenuItem>
   ))}
+</TextField>
 
 
 
-  </TextField>
+{/* {selectedMeal && (
+  <Box mt={2}>
+    <Typography variant="body1">You selected: {selectedMeal}</Typography>
+  </Box>
+)} */}
+
 <TextField
   select
   label="Sort by Title"

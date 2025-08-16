@@ -5,9 +5,9 @@ const initialRecipes = typeof window !== "undefined" && localStorage.getItem("re
   ? JSON.parse(localStorage.getItem("recipes"))
   : [];
 
-const initialBookmarks = typeof window !== "undefined" && localStorage.getItem("bookmarks")
-  ? JSON.parse(localStorage.getItem("bookmarks"))
-  : [];
+// const initialBookmarks = typeof window !== "undefined" && localStorage.getItem("bookmarks")
+//   ? JSON.parse(localStorage.getItem("bookmarks"))
+//   : [];
 
 export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
@@ -92,7 +92,7 @@ const recipeSlice = createSlice({
   initialState: {
     list: initialRecipes,
     selectedRecipe: null,
-    bookmarks: initialBookmarks,
+    // bookmarks: initialBookmarks,
     searchCache: {}, // { query: results }
     loading: false,
     error: null,
