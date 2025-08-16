@@ -236,20 +236,25 @@ const paginatedRecipes = filteredRecipes.slice(skip, skip + limit);
       "& .MuiInputLabel-root": { color: "#555", fontWeight: 500 },
     }}
   >
-    <MenuItem value="">All</MenuItem>
-    <MenuItem value="breakfast">Breakfast</MenuItem>
-    <MenuItem value="lunch">Lunch</MenuItem>
-    <MenuItem value="dinner">Dinner</MenuItem>
-    <MenuItem value="dessert">Dessert</MenuItem>
-    <MenuItem value="snack">Snack</MenuItem>
-    <MenuItem value="drink">Drink</MenuItem>
-    <MenuItem value="appetizer">Appetizer</MenuItem>
-    <MenuItem value="side">Side</MenuItem>
-    {meals.map((meal) => (
-      <MenuItem key={meal} value={meal}>
-        {meal}
-      </MenuItem>
-    ))}
+{meals
+  .filter((meal) =>
+    ![
+      "breakfast",
+      "lunch",
+      "dinner",
+      "dessert",
+      "snack",
+      "drink",
+      "appetizer",
+      "side",
+    ].includes(meal.name.toLowerCase())
+  )
+  .map((meal) => (
+    <div key={meal.id}>{meal.name}</div>
+  ))}
+
+
+
   </TextField>
 <TextField
   select
