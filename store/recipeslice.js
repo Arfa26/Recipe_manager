@@ -1,25 +1,35 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // Load from localStorage
-const initialRecipes = typeof window !== "undefined" && localStorage.getItem("recipes")
-  ? JSON.parse(localStorage.getItem("recipes"))
-  : [];
+const initialRecipes = typeof window !== "undefined" 
+      ? JSON.parse(localStorage.getItem("recipes") || "[]") 
+      : [];
+
+
 
 // const initialBookmarks = typeof window !== "undefined" && localStorage.getItem("bookmarks")
 //   ? JSON.parse(localStorage.getItem("bookmarks"))
 //   : [];
 
+// 
 export const fetchRecipes = createAsyncThunk(
   'recipes/fetchRecipes',
-  async ({ skip = 0, limit = 10 } = {}) => {
+  async ({ skip = 0, limit = 30, sort = '' } = {}) => {
     let recipesList;
 
     if (initialRecipes.length) {
       recipesList = initialRecipes;
     } else {
-      const res = await fetch(`https://dummyjson.com/recipes?limit=${limit}&skip=${skip}${sort ? `&sort=${sort}` : ''}`);
+      const url = `https://dummyjson.com/recipes?limit=${limit}&skip=${skip}${sort ? `&sort=${sort}` : ''}`;
+      const res = await fetch(url);
+      console.log("Fetching:", url);
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch recipes");
+      }
+
       const data = await res.json();
-      recipesList = data.recipes;
+      recipesList = data.recipes || [];  // always fallback to array
     }
 
     // Filter out deleted recipes stored in localStorage
@@ -30,13 +40,27 @@ export const fetchRecipes = createAsyncThunk(
   }
 );
 
+// export const addRecipe = createAsyncThunk(
+//   'recipes/addRecipe',
+//   async (newRecipe) => {
+//     const id = Date.now();
+//     return { id, ...newRecipe };
+//   }
+// );
 export const addRecipe = createAsyncThunk(
   'recipes/addRecipe',
   async (newRecipe) => {
     const id = Date.now();
-    return { id, ...newRecipe };
+    const recipe = { id, ...newRecipe };
+
+    // Get current recipes from localStorage
+    const storedRecipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+    localStorage.setItem("recipes", JSON.stringify([...storedRecipes, recipe]));
+
+    return recipe;
   }
 );
+
 
 export const fetchRecipeById = createAsyncThunk(
   'recipes/fetchRecipeById',
@@ -97,10 +121,14 @@ const recipeSlice = createSlice({
     loading: false,
     error: null,
   },
-  reducers: {
-    clearSelectedRecipe: (state) => { state.selectedRecipe = null; },
+  // reducers: {
+  //   clearSelectedRecipe: (state) => { state.selectedRecipe = null; },
 
-  },
+  // },
+reducers: {
+  clearSelectedRecipe: (state) => { state.selectedRecipe = null; },
+  setFilteredRecipes: (state, action) => { state.list = action.payload; }, // ✅ add this
+},
   extraReducers: (builder) => {
     builder
       .addCase(fetchRecipes.pending, (state) => { state.loading = true; })
@@ -138,6 +166,7 @@ const recipeSlice = createSlice({
       });
   }
 });
+export const {  setFilteredRecipes } = recipeSlice.actions;
 
 export const { clearSelectedRecipe, bookmarkRecipe, removeBookmark, cacheSearchResults } = recipeSlice.actions;
 export default recipeSlice.reducer;

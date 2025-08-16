@@ -12,7 +12,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useDispatch, useSelector } from 'react-redux';
 import AddRecipeDialog from "@/components/AddRecipeDialog";
- import {addRecipe, fetchRecipes, fetchRecipeById, deleteRecipe, updateRecipe, clearSelectedRecipe } from '../store/recipeslice';
+import { addRecipe, fetchRecipes, fetchRecipeById, deleteRecipe, updateRecipe, clearSelectedRecipe, setFilteredRecipes } from '../store/recipeslice';
 import EditRecipeDialog from "@/components/EditRecipeDialog";
 import DeleteDialog from "@/components/DeleteRecipeDialog";
 import { useTheme } from "@mui/material/styles";
@@ -22,7 +22,7 @@ export default function FeaturedRecipe() {
   const [search, setSearch] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("");
   const [skip, setSkip] = useState(0);
-
+  // const[recipes, setRecipes] = useState([]);
   const limit = 10;
   const router = useRouter();
   const [tags, setTags] = useState([]);
@@ -43,10 +43,14 @@ const [loadingRecipe, setLoadingRecipe] = useState(false);
 const dispatch = useDispatch();
 const { list: recipes, selectedRecipe, loading} = useSelector(state => state.recipes);
 
-
+  // const [recipes, setRecipes] = useState([]);
+  // useEffect(() => {
+  //   const storedRecipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+  //   setRecipes(storedRecipes);
+  // }, []);
   // Fetch recipes (pagination)
  useEffect(() => {
-    dispatch(fetchRecipes({ skip: 0, limit: 10 })); 
+    dispatch(fetchRecipes({ skip: 0, limit: 30 })); 
   }, [dispatch]);
 
 
@@ -112,59 +116,100 @@ useEffect(() => {
   }, []);
 
   // Fetch recipes based on selected meal
-  useEffect(() => {
-    if (!selectedMeal) return;
+useEffect(() => {
+  if (!selectedMeal) return;
 
-    const fetchByMeal = async () => {
-      try {
-        const res = await fetch(
-          `https://dummyjson.com/recipes/meal/${selectedMeal}`
-        );
-        const data = await res.json();
-        setRecipes(data.recipes || []);
-      } catch (err) {
-        console.error("Error fetching filtered recipes:", err);
-      }
-    };
-      fetchByMeal();
-  }, [selectedMeal]);
+  const fetchByMeal = async () => {
+    try {
+      const storedRecipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+      const res = await fetch("https://dummyjson.com/recipes?limit=100");
+      const data = await res.json();
+      const allRecipes = [...storedRecipes, ...(data.recipes || [])];
+
+      // Filter by selectedMeal locally
+      const filtered = allRecipes.filter(recipe =>
+        recipe.mealType?.map(m => m.toLowerCase()).includes(selectedMeal.toLowerCase())
+      );
+
+      // ✅ dispatch to update Redux state
+      dispatch(setFilteredRecipes(filtered));
+    } catch (err) {
+      console.error("Error fetching filtered recipes:", err);
+    }
+  };
+
+  fetchByMeal();
+}, [selectedMeal]);
+
 
 
 
   // Handle search input from SearchBar
-  const handleSearch = async (query) => {
-    setSearch(query);
+  // const handleSearch = async (query) => {
+  //   setSearch(query);
 
-    if (!query.trim()) {
-      fetchRecipes(); 
-      return;
-    }
+  //   if (!query.trim()) {
+  //     fetchRecipes(); 
+  //     return;
+  //   }
 
-    try {
-      const res = await fetch(`https://dummyjson.com/recipes/search?q=${query}`);
-      const data = await res.json();
-      setRecipes(data.recipes || []);
-    } catch (err) {
-      console.error("Search failed:", err);
-    }
-  };
+  //   try {
+  //     const res = await fetch(`https://dummyjson.com/recipes/search?q=${query}`);
+  //     const data = await res.json();
+  //     setRecipes(data.recipes || []);
+  //   } catch (err) {
+  //     console.error("Search failed:", err);
+  //   }
+  // };
 
+const handleSearch = async (query) => {
+  setSearch(query);
+
+  if (!query.trim()) {
+    dispatch(fetchRecipes({ skip: 0, limit: 30 })); // fetch all
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://dummyjson.com/recipes/search?q=${query}`);
+    const data = await res.json();
+
+    // ✅ use dispatch instead of setRecipes
+    dispatch(setFilteredRecipes(data.recipes || []));
+  } catch (err) {
+    console.error("Search failed:", err);
+  }
+};
 
 
 const handleViewRecipe = (id) => {
   dispatch(fetchRecipeById(id));
   router.push(`/`); // Navigate to detail page
 };
-let filteredRecipes = recipes.filter((recipe) => {
-  const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase());
+// let filteredRecipes = recipes.filter((recipe) => {
+//   const matchesSearch = recipe.name.toLowerCase().includes(search.toLowerCase());
+//   const matchesTag = selectedTag
+//     ? recipe.tags?.map(t => t.toLowerCase()).includes(selectedTag.toLowerCase())
+//     : true;
+//   const matchesMeal = selectedMeal
+//     ? recipe.mealType?.map(m => m.toLowerCase()).includes(selectedMeal.toLowerCase())
+//     : true;
+//   return matchesSearch && matchesTag && matchesMeal;
+// });
+
+let filteredRecipes = Array.isArray(recipes) ? recipes.filter((recipe) => {
+  const matchesSearch = recipe.name?.toLowerCase().includes(search.toLowerCase());
+  
   const matchesTag = selectedTag
     ? recipe.tags?.map(t => t.toLowerCase()).includes(selectedTag.toLowerCase())
     : true;
+
   const matchesMeal = selectedMeal
     ? recipe.mealType?.map(m => m.toLowerCase()).includes(selectedMeal.toLowerCase())
     : true;
+
   return matchesSearch && matchesTag && matchesMeal;
-});
+}) : [];
 
 // Sort by title if selected
 if (sortOrder === "asc") {
@@ -345,7 +390,10 @@ const paginatedRecipes = filteredRecipes.slice(skip, skip + limit);
   open={openAddDialog}
   onClose={() => setOpenAddDialog(false)}
   onSubmit={(newRecipe) => {
-    dispatch(addRecipe(newRecipe)); 
+    // 1. Save to localStorage
+    const storedRecipes = JSON.parse(localStorage.getItem("recipes") || "[]");
+    localStorage.setItem("recipes", JSON.stringify([...storedRecipes, newRecipe]));
+    dispatch(addRecipe(newRecipe));
     setOpenAddDialog(false);        
   }}
 />
