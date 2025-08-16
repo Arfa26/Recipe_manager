@@ -81,17 +81,18 @@ useEffect(() => {
 useEffect(() => {
   const fetchMeals = async () => {
     try {
-      const res = await fetch("https://dummyjson.com/recipes/meal");
+      const res = await fetch("https://dummyjson.com/recipes"); // ✅ correct endpoint
       const data = await res.json();
-      // Convert object to array
-      const mealsArray = data.meals ? Object.values(data.meals) : [];
-      setMeals(mealsArray);
+
+      // data.recipes is already an array
+      setMeals(data.recipes);
     } catch (err) {
       console.error("Error fetching meals:", err);
     }
   };
   fetchMeals();
 }, []);
+
 
 
 
